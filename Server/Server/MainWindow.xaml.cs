@@ -29,8 +29,17 @@ namespace Server
         public MainWindow()
         {
             InitializeComponent();
-            cs = new ChatServer();
-            this.DataContext = cs;
+
+            lbActiveClients.SelectionChanged += (_s,_e)=>
+            {
+                if (lbActiveClients.SelectedValue == null)
+                    return;
+                if (lbActiveClients.SelectedValue is Client)
+                    tbTargetUsername.Text = (lbActiveClients.SelectedValue as Client).Username;
+            };
+
+
+            this.DataContext = cs = new ChatServer();
         }
 
         private void bSwitchServerState_Click(object sender, RoutedEventArgs e)
