@@ -7,11 +7,15 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Threading;
 
 namespace Server
 {
     public class ChatServer : INotifyPropertyChanged
     {
+        private Dispatcher _dispatcher { get; set; }
+
         private int _clientIdCounter;
         private Thread _thread;
         private Socket _socket;
@@ -58,13 +62,13 @@ namespace Server
             set
             {
                 this._username = value;
-                if (IsServerActive)
+                if (this.IsServerActive)
                 {
-                    lstClients[0].Username = value;
+                    this.lstClients[0].Username = value;
                 }
             }
         }
-        
+
         public BindingList<Client> lstClients { get; set; }
         public BindingList<String> lstChat { get; set; }
 
@@ -93,6 +97,7 @@ namespace Server
 
         public ChatServer()
         {
+            this._dispatcher = Dispatcher.CurrentDispatcher;
             this.lstChat = new BindingList<string>();
             this.lstClients = new BindingList<Client>();
 
@@ -141,14 +146,10 @@ namespace Server
         }
         public void SwitchServerState()
         {
-            if (!this.IsServerActive)
-            { // server should be activated
+            if (!this.IsServerActive) // server should be activated
                 this.StartServer();
-            }
-            else
-            { // server is currently active and should be stopped
+            else // server is currently active and should be stopped
                 this.StopServer();
-            }
         }
         public void SendMessage(string toUsername, string messageContent)
             => this.SendMessage(this.lstClients[0], toUsername, messageContent);
@@ -198,7 +199,10 @@ namespace Server
                     client.Socket = _socket.Accept();
                     client.Thread = new Thread(() => ProcessMessages(client));
 
-                    lstClients.Add(client);
+                    this._dispatcher.Invoke(new Action(() =>
+                    {
+                        lstClients.Add(client);
+                    }), null);
 
                     client.Thread.Start();
                 }
@@ -216,8 +220,12 @@ namespace Server
                 {
                     if (!c.IsSocketConnected())
                     {
-                        lstClients.Remove(c);
-                        c.Dispose();
+                        this._dispatcher.Invoke(new Action(() =>
+                        {
+                            lstClients.Remove(c);
+                            c.Dispose();
+                        }), null);
+
                         return;
                     }
 
@@ -239,15 +247,21 @@ namespace Server
                             string targetUsername = data.Substring(0, data.IndexOf(':'));
                             string message = data.Substring(data.IndexOf(':') + 1);
 
-                            SendMessage(c, targetUsername, message);
+                            this._dispatcher.Invoke(new Action(() =>
+                            {
+                                SendMessage(c, targetUsername, message);
+                            }), null);
                         }
 
                     }
                 }
                 catch (Exception)
                 {
-                    lstClients.Remove(c);
-                    c.Dispose();
+                    this._dispatcher.Invoke(new Action(() =>
+                    {
+                        lstClients.Remove(c);
+                        c.Dispose();
+                    }), null);
                     return;
                 }
             }

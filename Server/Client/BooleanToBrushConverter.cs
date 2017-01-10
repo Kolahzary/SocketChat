@@ -4,7 +4,7 @@ using System.Windows.Media;
 
 namespace Server
 {
-    public class BooleanToBrush : IValueConverter
+    public class BooleanToBrushConverter : IValueConverter
     {
         private readonly Brush bTrue = new SolidColorBrush(Color.FromArgb(255, 192, 255, 192));
         private readonly Brush bFalse = new SolidColorBrush(Color.FromArgb(255, 255, 192, 192));
