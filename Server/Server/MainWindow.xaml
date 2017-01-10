@@ -41,7 +41,7 @@
             <StatusBarItem>
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="Active users: " Width="auto"/>
-                    <TextBlock Text="{Binding Path=ActiveClients,UpdateSourceTrigger=PropertyChanged}" Width="auto"/>
+                    <TextBlock Text="{Binding Path=ActiveClients}" Width="auto"/>
                 </StackPanel>
             </StatusBarItem>
         </StatusBar>
