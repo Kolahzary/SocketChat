@@ -210,7 +210,7 @@ namespace Server
 
                     client.Thread.Start();
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     //MessageBox.Show(ex.Message, "Error");
                 }
