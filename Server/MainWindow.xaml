@@ -7,31 +7,13 @@
         xmlns:local="clr-namespace:Server"
         mc:Ignorable="d" FontSize="14" Name="wMain" Icon="LocalServer.ico"
         Title="Server" Height="385.665" Width="526.886">
-    
+
+    <!--<Window.DataContext>
+        
+    </Window.DataContext>-->
+
     <Window.Resources>
-        <local:BooleanToStartStopConverter x:Key="BooleanToStartStopConverter" />
-        <local:BooleanToServerStatusMessageConverter x:Key="BooleanToServerStatusMessageConverter" />
-        <local:BooleanToBrushConverter x:Key="BooleanToBrushConverter" />
-        <Style TargetType="TextBox">
-            <Setter Property="Margin" Value="3"/>
-            <Setter Property="Padding" Value="3"/>
-        </Style>
-        <Style TargetType="xctk:IntegerUpDown">
-            <Setter Property="Margin" Value="3"/>
-            <Setter Property="Padding" Value="3"/>
-        </Style>
-        <Style TargetType="TextBlock">
-            <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="Width" Value="120"/>
-            <Setter Property="Margin" Value="3"/>
-        </Style>
-        <Style TargetType="Button">
-            <Setter Property="Width" Value="70"/>
-            <Setter Property="Margin" Value="3"/>
-        </Style>
-        <Style TargetType="ListBox">
-            <Setter Property="Margin" Value="3"/>
-        </Style>
+        <ResourceDictionary Source="ResourceDictionary.xaml"/>
     </Window.Resources>
     
     <DockPanel Margin="0 10 0 0">
