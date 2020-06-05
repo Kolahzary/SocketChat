@@ -7,6 +7,7 @@
         xmlns:local="clr-namespace:Server"
         mc:Ignorable="d" FontSize="14" Name="wMain" Icon="LocalServer.ico"
         Title="Server" Height="385.665" Width="526.886">
+    
     <Window.Resources>
         <local:BooleanToStartStopConverter x:Key="BooleanToStartStopConverter" />
         <local:BooleanToServerStatusMessageConverter x:Key="BooleanToServerStatusMessageConverter" />
@@ -32,10 +33,13 @@
             <Setter Property="Margin" Value="3"/>
         </Style>
     </Window.Resources>
+    
     <DockPanel Margin="0 10 0 0">
+        
         <StatusBar Name="sbMain" DockPanel.Dock="Bottom">
             <StatusBarItem>
-                <TextBlock Text="{Binding Path=IsServerActive,Converter={StaticResource BooleanToServerStatusMessageConverter}}" Background="{Binding Path=IsServerActive,Converter={StaticResource BooleanToBrushConverter}}" />
+                <TextBlock Text="{Binding Path=IsServerActive,Converter={StaticResource BooleanToServerStatusMessageConverter}}" 
+                           Background="{Binding Path=IsServerActive,Converter={StaticResource BooleanToBrushConverter}}" />
             </StatusBarItem>
             <Separator/>
             <StatusBarItem>
@@ -45,10 +49,12 @@
                 </StackPanel>
             </StatusBarItem>
         </StatusBar>
+        
         <DockPanel IsEnabled="{Binding Path=IsServerActive}" DockPanel.Dock="Right">
             <TextBlock DockPanel.Dock="Top" Text="Active Clients" TextAlignment="Center"/>
             <ListBox Name="lbActiveClients" ItemsSource="{Binding Path=lstClients}" DisplayMemberPath="Username"/>
         </DockPanel>
+        
         <Grid Name="gControl" DockPanel.Dock="Top">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="auto"/>
@@ -62,14 +68,18 @@
             </Grid.RowDefinitions>
 
             <TextBlock Grid.Column="0" Grid.Row="0" Text="Socket Address:"/>
-            <TextBox Grid.Column="1" Grid.Row="0" Text="{Binding Path=IpAddress, UpdateSourceTrigger=PropertyChanged, ValidatesOnExceptions=True}" IsEnabled="{Binding Path=IsServerStopped}"/>
-            <xctk:IntegerUpDown Grid.Column="2" Grid.Row="0" Value="{Binding Path=Port, UpdateSourceTrigger=PropertyChanged, ValidatesOnExceptions=True}" Width="70" IsEnabled="{Binding Path=IsServerStopped}"/>
+            <TextBox Grid.Column="1" Grid.Row="0" Text="{Binding Path=IpAddress, UpdateSourceTrigger=PropertyChanged, ValidatesOnExceptions=True}" 
+                     IsEnabled="{Binding Path=IsServerStopped}"/>
+            <xctk:IntegerUpDown Grid.Column="2" Grid.Row="0" Value="{Binding Path=Port, UpdateSourceTrigger=PropertyChanged, ValidatesOnExceptions=True}" 
+                                Width="70" IsEnabled="{Binding Path=IsServerStopped}"/>
 
             <TextBlock Grid.Column="0" Grid.Row="1" Text="Username:"/>
             <TextBox Grid.Column="1" Grid.Row="1" Text="{Binding Path=Username, UpdateSourceTrigger=PropertyChanged}"/>
 
-            <Button Name="bSwitchServerState" Grid.Column="3" Grid.Row="0" Grid.RowSpan="2" Content="{Binding Path=IsServerActive,Converter={StaticResource BooleanToStartStopConverter}}" Click="bSwitchServerState_Click"/>
+            <Button Name="bSwitchServerState" Grid.Column="3" Grid.Row="0" Grid.RowSpan="2" 
+                    Content="{Binding Path=IsServerActive,Converter={StaticResource BooleanToStartStopConverter}}" Click="bSwitchServerState_Click"/>
         </Grid>
+        
         <DockPanel IsEnabled="{Binding Path=IsServerActive}">
             <Grid DockPanel.Dock="Top">
                 <Grid.ColumnDefinitions>

@@ -1,22 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Net;
-using System.Net.Sockets;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-
+﻿using System.Windows;
 
 namespace Server
 {
@@ -25,31 +7,36 @@ namespace Server
     /// </summary>
     public partial class MainWindow : Window
     {
-        ChatServer cs;
+        private ChatServer cs;
+
         public MainWindow()
         {
-            InitializeComponent();
+            this.InitializeComponent();
 
-            lbActiveClients.SelectionChanged += (_s,_e)=>
+            this.lbActiveClients.SelectionChanged += (_s, _e) =>
             {
-                if (lbActiveClients.SelectedValue == null)
+                if (this.lbActiveClients.SelectedValue == null)
+                {
                     return;
-                if (lbActiveClients.SelectedValue is Client)
-                    tbTargetUsername.Text = (lbActiveClients.SelectedValue as Client).Username;
+                }
+
+                if (this.lbActiveClients.SelectedValue is Client)
+                {
+                    this.tbTargetUsername.Text = (this.lbActiveClients.SelectedValue as Client).Username;
+                }
             };
 
-
-            this.DataContext = cs = new ChatServer();
-        }
-
-        private void bSwitchServerState_Click(object sender, RoutedEventArgs e)
-        {
-            cs.SwitchServerState();
+            this.DataContext = this.cs = new ChatServer();
         }
 
         private void bSend_Click(object sender, RoutedEventArgs e)
         {
-            cs.SendMessage(tbTargetUsername.Text, tbMessage.Text);
+            this.cs.SendMessage(this.tbTargetUsername.Text, this.tbMessage.Text);
+        }
+
+        private void bSwitchServerState_Click(object sender, RoutedEventArgs e)
+        {
+            this.cs.SwitchServerState();
         }
     }
 }

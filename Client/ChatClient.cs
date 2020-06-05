@@ -1,82 +1,103 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Threading;
 
 namespace Client
 {
     public class ChatClient : INotifyPropertyChanged
     {
-        private Dispatcher _dispatcher;
-        private Thread _thread;
-        private Socket _socket;
+        private Dispatcher dispatcher;
+        private IPAddress ipAddress;
+        private bool isClientConnected;
+        private ushort port;
+        private Socket socket;
+        private Thread thread;
+        private string username;
 
-        private IPAddress _ipAddress;
+        public ChatClient()
+        {
+            this.dispatcher = Dispatcher.CurrentDispatcher;
+            this.lstChat = new BindingList<string>();
+
+            this.IpAddress = "127.0.0.1";
+            this.Port = 5960;
+            this.Username = "Client" + new Random().Next(0, 99).ToString(); // random username
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
         public string IpAddress
         {
             get
             {
-                return _ipAddress.ToString();
+                return this.ipAddress.ToString();
             }
             set
             {
                 if (this.IsClientConnected)
+                {
                     throw new Exception("Can't change this property when server is active");
-                _ipAddress = IPAddress.Parse(value);
+                }
+
+                this.ipAddress = IPAddress.Parse(value);
             }
         }
 
-        private ushort _port;
-        public ushort Port
-        {
-            get
-            {
-                return _port;
-            }
-            set
-            {
-                if (this.IsClientConnected)
-                    throw new Exception("Can't change this property when server is active");
-                this._port = value;
-            }
-        }
-
-
-        private IPEndPoint _ipEndPoint => new IPEndPoint(_ipAddress, _port);
-
-        private bool _isClientConnected;
         public bool IsClientConnected
         {
             get
             {
-                return _isClientConnected;
+                return this.isClientConnected;
             }
             private set
             {
-                this._isClientConnected = value;
-
+                this.isClientConnected = value;
                 this.NotifyPropertyChanged("IsClientConnected");
                 this.NotifyPropertyChanged("IsClientDisconnected");
             }
         }
-        public bool IsClientDisconnected => !this.IsClientConnected;
 
-        private string _username;
+        public bool IsClientDisconnected
+        {
+            get
+            {
+                return !this.IsClientConnected;
+            }
+        }
+
+        public BindingList<string> lstChat { get; set; }
+
+        public ushort Port
+        {
+            get
+            {
+                return this.port;
+            }
+            set
+            {
+                if (this.IsClientConnected)
+                {
+                    throw new Exception("Can't change this property when server is active");
+                }
+
+                this.port = value;
+            }
+        }
+
         public string Username
         {
             get
             {
-                return _username;
+                return this.username;
             }
             set
             {
-                this._username = value;
+                this.username = value;
+
                 if (this.IsClientConnected)
                 {
                     this.SetUsername(value);
@@ -84,90 +105,56 @@ namespace Client
             }
         }
 
-        public BindingList<String> lstChat { get; set; }
-
-        #region INotifyPropertyChanged implementation
-        public event PropertyChangedEventHandler PropertyChanged;
-        private void NotifyPropertyChanged(string propName) => this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propName));
-        #endregion
-        public ChatClient()
+        private IPEndPoint ipEndPoint
         {
-            this._dispatcher = Dispatcher.CurrentDispatcher;
-            this.lstChat = new BindingList<string>();
-
-            this.IpAddress = "127.0.0.1";
-            this.Port = 5960;
-            this.Username = "Client" + new Random().Next(0, 99).ToString(); // random username
+            get
+            {
+                return new IPEndPoint(this.ipAddress, this.port);
+            }
         }
+
         public static bool IsSocketConnected(Socket s)
         {
             if (!s.Connected)
+            {
                 return false;
+            }
 
             if (s.Available == 0)
+            {
                 if (s.Poll(1000, SelectMode.SelectRead))
+                {
                     return false;
+                }
+            }
 
             return true;
         }
-        public void SwitchClientState()
-        {
-            if (!this.IsClientConnected)
-                this.Connect();
-            else
-                this.Disconnect();
-        }
-        private void Connect()
-        {
-            if (this.IsClientConnected) return;
 
-            this._socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            this._socket.Connect(this._ipEndPoint);
-
-            SetUsername(this.Username);
-
-            this._thread = new Thread(() => this.ReceiveMessages());
-            this._thread.Start();
-
-            this.IsClientConnected = true;
-        }
-        private void Disconnect()
-        {
-            if (!this.IsClientConnected) return;
-            if (this._socket != null && this._thread != null)
-            {
-                //this._thread.Abort(); MainThread = null;
-                this._socket.Shutdown(SocketShutdown.Both);
-                //this._socket.Disconnect(false);
-                this._socket.Dispose();
-                this._socket = null;
-                this._thread = null;
-            }
-            this.lstChat.Clear();
-
-            this.IsClientConnected = false;
-        }
         public void ReceiveMessages()
         {
             while (true)
             {
                 byte[] inf = new byte[1024];
+
                 try
                 {
-                    if (!IsSocketConnected(this._socket))
+                    if (!IsSocketConnected(this.socket))
                     {
-                        this._dispatcher.Invoke(new Action(() =>
+                        this.dispatcher.Invoke(new Action(() =>
                         {
                             this.Disconnect();
                         }));
                         return;
                     }
-                    int x = this._socket.Receive(inf);
+
+                    int x = this.socket.Receive(inf);
+
                     if (x > 0)
                     {
                         string message = Encoding.Unicode.GetString(inf).Trim('\0');
 
-                        this._dispatcher.Invoke(new Action(() =>
+                        this.dispatcher.Invoke(new Action(() =>
                         {
                             this.lstChat.Add(message);
                         }));
@@ -175,7 +162,7 @@ namespace Client
                 }
                 catch (Exception)
                 {
-                    this._dispatcher.Invoke(new Action(() =>
+                    this.dispatcher.Invoke(new Action(() =>
                     {
                         this.Disconnect();
                     }));
@@ -183,20 +170,73 @@ namespace Client
                     return;
                 }
             }
+        }
 
+        public void SendMessageTo(string targetUsername, string message)
+        {
+            string cmd = string.Format("/msgto {0}:{1}", targetUsername, message);
+
+            this.socket.Send(Encoding.Unicode.GetBytes(cmd));
+        }
+
+        public void SwitchClientState()
+        {
+            if (!this.IsClientConnected)
+            {
+                this.Connect();
+            }
+            else
+            {
+                this.Disconnect();
+            }
+        }
+
+        private void Connect()
+        {
+            if (this.IsClientConnected)
+            {
+                return;
+            }
+
+            this.socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            this.socket.Connect(this.ipEndPoint);
+            this.SetUsername(this.Username);
+            this.thread = new Thread(() => this.ReceiveMessages());
+            this.thread.Start();
+            this.IsClientConnected = true;
+        }
+
+        private void Disconnect()
+        {
+            if (!this.IsClientConnected)
+            {
+                return;
+            }
+
+            if (this.socket != null && this.thread != null)
+            {
+                //this.thread.Abort(); MainThread = null;
+                this.socket.Shutdown(SocketShutdown.Both);
+                //this.socket.Disconnect(false);
+                this.socket.Dispose();
+                this.socket = null;
+                this.thread = null;
+            }
+
+            this.lstChat.Clear();
+            this.IsClientConnected = false;
+        }
+
+        private void NotifyPropertyChanged(string propName)
+        {
+            this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propName));
         }
 
         private void SetUsername(string newUsername)
         {
             string cmd = string.Format("/setname {0}", newUsername);
 
-            this._socket.Send(Encoding.Unicode.GetBytes(cmd));
-        }
-        public void SendMessageTo(string targetUsername, string message)
-        {
-            string cmd = string.Format("/msgto {0}:{1}", targetUsername, message);
-
-            this._socket.Send(Encoding.Unicode.GetBytes(cmd));
+            this.socket.Send(Encoding.Unicode.GetBytes(cmd));
         }
     }
 }

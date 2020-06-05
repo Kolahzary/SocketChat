@@ -1,17 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace Client
 {
@@ -21,28 +9,29 @@ namespace Client
     public partial class MainWindow : Window
     {
         private ChatClient cc;
+
         public MainWindow()
         {
-            InitializeComponent();
-            cc = new ChatClient();
-            this.DataContext = cc;
+            this.InitializeComponent();
+            this.cc = new ChatClient();
+            this.DataContext = this.cc;
+        }
+
+        private void bSend_Click(object sender, RoutedEventArgs e)
+        {
+            this.cc.SendMessageTo(this.tbTargetUsername.Text, this.tbMessage.Text);
         }
 
         private void bSwitchClientState_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-                cc.SwitchClientState();
+                this.cc.SwitchClientState();
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-        }
-
-        private void bSend_Click(object sender, RoutedEventArgs e)
-        {
-            cc.SendMessageTo(tbTargetUsername.Text, tbMessage.Text);
         }
     }
 }

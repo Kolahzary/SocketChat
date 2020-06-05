@@ -8,36 +8,82 @@ namespace Server
 {
     public class Client : IDisposable, INotifyPropertyChanged
     {
-        private int _id;
-        private string _username;
+        private int id;
+        private bool isDisposed = false;
+        private string username;
+
+        public event PropertyChangedEventHandler PropertyChanged;
 
         public int ID
         {
             get
             {
-                return _id;
+                return this.id;
             }
             set
             {
-                this._id = value;
+                this.id = value;
                 this.NotifyPropertyChanged("ID");
             }
         }
+
+        public Socket Socket { get; set; }
+
+        public Thread Thread { get; set; }
+
         public string Username
         {
             get
             {
-                return _username;
+                return this.username;
             }
             set
             {
-                this._username = value;
+                this.username = value;
                 this.NotifyPropertyChanged("Username");
             }
         }
-        public Socket Socket { get; set; }
-        public Thread Thread { get; set; }
+        public static bool IsSocketConnected(Socket s)
+        {
+            if (!s.Connected)
+            {
+                return false;
+            }
 
+            if (s.Available == 0)
+            {
+                if (s.Poll(1000, SelectMode.SelectRead))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        public void Dispose()
+        {
+            if (!this.isDisposed)
+            {
+                if (this.Socket != null)
+                {
+                    this.Socket.Shutdown(SocketShutdown.Both);
+                    this.Socket.Dispose();
+                    this.Socket = null;
+                }
+                if (this.Thread != null)
+                {
+                    this.Thread = null;
+                }
+
+                this.isDisposed = true;
+            }
+        }
+
+        public bool IsSocketConnected()
+        {
+            return IsSocketConnected(this.Socket);
+        }
 
         public void SendMessage(string message)
         {
@@ -50,46 +96,10 @@ namespace Server
                 //throw;
             }
         }
-        
-        public bool IsSocketConnected()
+
+        private void NotifyPropertyChanged(string propName)
         {
-            return IsSocketConnected(Socket);
+            this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propName));
         }
-
-        public static bool IsSocketConnected(Socket s)
-        {
-            if (!s.Connected)
-                return false;
-
-            if (s.Available == 0)
-                if (s.Poll(1000, SelectMode.SelectRead))
-                    return false;
-
-            return true;
-        }
-
-        #region IDisposable implementation
-        private bool _isDisposed = false;
-        public void Dispose()
-        {
-            if (!_isDisposed)
-            {
-                if (this.Socket != null)
-                {
-                    this.Socket.Shutdown(SocketShutdown.Both);
-                    this.Socket.Dispose();
-                    this.Socket = null;
-                }
-                if (this.Thread != null)
-                    this.Thread = null;
-                _isDisposed = true;
-            }
-        }
-        #endregion
-
-        #region INotifyPropertyChanged implementation
-        public event PropertyChangedEventHandler PropertyChanged;
-        private void NotifyPropertyChanged(string propName) => this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propName));
-        #endregion
     }
 }

@@ -7,6 +7,7 @@
         xmlns:local="clr-namespace:Server"
         mc:Ignorable="d" FontSize="14" Name="wMain" Icon="User.ico"
         Title="Client" Height="385.665" Width="442.675">
+    
     <Window.Resources>
         <local:BooleanToConnectDisconnectConverter x:Key="BooleanToConnectDisconnectConverter" />
         <local:BooleanToClientStatusMessageConverter x:Key="BooleanToClientStatusMessageConverter" />
@@ -32,12 +33,15 @@
             <Setter Property="Margin" Value="3"/>
         </Style>
     </Window.Resources>
+    
     <DockPanel Margin="0 10 0 0">
         <StatusBar Name="sbMain" DockPanel.Dock="Bottom">
             <StatusBarItem>
-                <TextBlock Text="{Binding Path=IsClientConnected,Converter={StaticResource BooleanToClientStatusMessageConverter}}" Background="{Binding Path=IsClientConnected,Converter={StaticResource BooleanToBrushConverter}}" Width="auto" Padding="3" />
+                <TextBlock Text="{Binding Path=IsClientConnected,Converter={StaticResource BooleanToClientStatusMessageConverter}}" 
+                           Background="{Binding Path=IsClientConnected,Converter={StaticResource BooleanToBrushConverter}}" Width="auto" Padding="3" />
             </StatusBarItem>
         </StatusBar>
+        
         <Grid Name="gControl" DockPanel.Dock="Top">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="auto"/>
@@ -51,14 +55,19 @@
             </Grid.RowDefinitions>
 
             <TextBlock Grid.Column="0" Grid.Row="0" Text="Socket Address:"/>
-            <TextBox Grid.Column="1" Grid.Row="0" Text="{Binding Path=IpAddress, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding Path=IsClientDisconnected}"/>
-            <xctk:IntegerUpDown Grid.Column="2" Grid.Row="0" Value="{Binding Path=Port, UpdateSourceTrigger=PropertyChanged}" Width="70" IsEnabled="{Binding Path=IsClientDisconnected}"/>
+            <TextBox Grid.Column="1" Grid.Row="0" Text="{Binding Path=IpAddress, UpdateSourceTrigger=PropertyChanged}" 
+                     IsEnabled="{Binding Path=IsClientDisconnected}"/>
+            <xctk:IntegerUpDown Grid.Column="2" Grid.Row="0" Value="{Binding Path=Port, UpdateSourceTrigger=PropertyChanged}" Width="70" 
+                                IsEnabled="{Binding Path=IsClientDisconnected}"/>
 
             <TextBlock Grid.Column="0" Grid.Row="1" Text="Username:"/>
             <TextBox Grid.Column="1" Grid.Row="1" Text="{Binding Path=Username, UpdateSourceTrigger=PropertyChanged}"/>
 
-            <Button Name="bSwitchClientState" Grid.Column="3" Grid.Row="0" Grid.RowSpan="2" Content="{Binding Path=IsClientConnected,Converter={StaticResource BooleanToConnectDisconnectConverter}}" Click="bSwitchClientState_Click"/>
+            <Button Name="bSwitchClientState" Grid.Column="3" Grid.Row="0" Grid.RowSpan="2" 
+                    Content="{Binding Path=IsClientConnected,Converter={StaticResource BooleanToConnectDisconnectConverter}}" 
+                    Click="bSwitchClientState_Click"/>
         </Grid>
+        
         <DockPanel IsEnabled="{Binding Path=IsClientConnected}">
             <Grid DockPanel.Dock="Top">
                 <Grid.ColumnDefinitions>
