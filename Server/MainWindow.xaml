@@ -8,16 +8,16 @@
         mc:Ignorable="d" FontSize="14" Name="wMain" Icon="LocalServer.ico"
         Title="Server" Height="385.665" Width="526.886">
 
-    <!--<Window.DataContext>
-        
-    </Window.DataContext>-->
+    <Window.DataContext>
+        <local:ChatServer/>
+    </Window.DataContext>
 
     <Window.Resources>
         <ResourceDictionary Source="ResourceDictionary.xaml"/>
     </Window.Resources>
-    
+
     <DockPanel Margin="0 10 0 0">
-        
+
         <StatusBar Name="sbMain" DockPanel.Dock="Bottom">
             <StatusBarItem>
                 <TextBlock Text="{Binding Path=IsServerActive,Converter={StaticResource BooleanToServerStatusMessageConverter}}" 
@@ -31,12 +31,12 @@
                 </StackPanel>
             </StatusBarItem>
         </StatusBar>
-        
+
         <DockPanel IsEnabled="{Binding Path=IsServerActive}" DockPanel.Dock="Right">
             <TextBlock DockPanel.Dock="Top" Text="Active Clients" TextAlignment="Center"/>
-            <ListBox Name="lbActiveClients" ItemsSource="{Binding Path=lstClients}" DisplayMemberPath="Username"/>
+            <ListBox Name="lbActiveClients" ItemsSource="{Binding Path=ClientList}" DisplayMemberPath="Username" SelectedItem ="{Binding SelectedUsername}"/>
         </DockPanel>
-        
+
         <Grid Name="gControl" DockPanel.Dock="Top">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="auto"/>
@@ -56,12 +56,13 @@
                                 Width="70" IsEnabled="{Binding Path=IsServerStopped}"/>
 
             <TextBlock Grid.Column="0" Grid.Row="1" Text="Username:"/>
-            <TextBox Grid.Column="1" Grid.Row="1" Text="{Binding Path=Username, UpdateSourceTrigger=PropertyChanged}"/>
+            <TextBox Grid.Column="1" Grid.Row="1" Text="{Binding Path=SourceUsername, UpdateSourceTrigger=PropertyChanged}"/>
 
             <Button Name="bSwitchServerState" Grid.Column="3" Grid.Row="0" Grid.RowSpan="2" 
-                    Content="{Binding Path=IsServerActive,Converter={StaticResource BooleanToStartStopConverter}}" Click="bSwitchServerState_Click"/>
+                    Content="{Binding Path=IsServerActive,Converter={StaticResource BooleanToStartStopConverter}}" 
+                    Command="{Binding SwitchServerStateCMD}"/>
         </Grid>
-        
+
         <DockPanel IsEnabled="{Binding Path=IsServerActive}">
             <Grid DockPanel.Dock="Top">
                 <Grid.ColumnDefinitions>
@@ -75,14 +76,37 @@
                 </Grid.RowDefinitions>
 
                 <TextBlock Grid.Column="0" Grid.Row="0" Text="Target Username:"/>
-                <TextBox Name="tbTargetUsername" Grid.Column="1" Grid.Row="0"/>
+                <TextBox Name="tbTargetUsername" Grid.Column="1" Grid.Row="0" Text="{Binding TargetUsername}"/>
 
                 <TextBlock Grid.Column="0" Grid.Row="1" Text="Message:"/>
-                <TextBox Name="tbMessage" Grid.Column="1" Grid.Row="1"/>
+                <TextBox Name="tbMessage" Grid.Column="1" Grid.Row="1" Text="{Binding MessageContent}"/>
 
-                <Button Name="bSend" Grid.Column="2" Grid.Row="0" Grid.RowSpan="2" Content="Send" Click="bSend_Click"/>
+                <!--CommandParameter="{Binding Text, ElementName=tbTargetUsername}"-->
+
+                <!--<Button Name="bSend" Grid.Column="2" Grid.Row="0" Grid.RowSpan="2" Content="Send" 
+                        Command="{Binding SendMessageCMD}">
+
+                    <Button.CommandParameter>
+                        <MultiBinding Converter="{StaticResource PassThroughConverter}">
+                            <Binding Path="Text" ElementName="tbTargetUsername"></Binding>
+                            <Binding Path="Text" ElementName="tbMessage"></Binding>
+                        </MultiBinding>
+                    </Button.CommandParameter>
+                </Button>-->
+
+                <!--<local:MessgaeData _Username="{Binding Text, ElementName=tbTargetUsername}" _Message="{Binding Text, ElementName=tbMessage}"/>-->
+
+                <Button Name="bSend" Grid.Column="2" Grid.Row="0" Grid.RowSpan="2" Content="Send" 
+                        Command="{Binding SendMessageCMD}">
+
+                    <!--<Button.CommandParameter>
+                        <local:MessgaeData _Username="{Binding Text, ElementName=tbTargetUsername}" _Message="{Binding Text, ElementName=tbMessage}"/>
+                    </Button.CommandParameter>-->
+                </Button>
+
+
             </Grid>
-            <ListBox Name="lstChatHistory" ItemsSource="{Binding Path=lstChat}"/>
+            <ListBox Name="lstChatHistory" ItemsSource="{Binding Path=ChatList}"/>
         </DockPanel>
     </DockPanel>
 </Window>

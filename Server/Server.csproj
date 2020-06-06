@@ -80,6 +80,7 @@
     <Compile Include="BooleanToServerStatusMessageConverter.cs" />
     <Compile Include="BooleanToStartStopConverter.cs" />
     <Compile Include="ChatServer.cs" />
+    <Compile Include="RelayCommand.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

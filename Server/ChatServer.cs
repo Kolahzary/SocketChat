@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
+using System.Windows.Input;
 using System.Windows.Threading;
 
 namespace Server
@@ -14,16 +15,19 @@ namespace Server
         private IPAddress ipAddress;
         private bool isServerActive;
         private ushort port;
+        private Client selectedUsername;
         private Socket socket;
+        private string messageContent;
+        private string targetUsername;
         private Thread thread;
-        private string username;
+        private string sourceUsername;
 
         public ChatServer()
         {
-            this._dispatcher = Dispatcher.CurrentDispatcher;
-            this.lstChat = new BindingList<string>();
-            this.lstClients = new BindingList<Client>();
-            this.lstClients.ListChanged += (_sender, _e) =>
+            this.dispatcher = Dispatcher.CurrentDispatcher;
+            this.ChatList = new BindingList<string>();
+            this.ClientList = new BindingList<Client>();
+            this.ClientList.ListChanged += (_sender, _e) =>
             {
                 this.NotifyPropertyChanged("ActiveClients");
             };
@@ -31,14 +35,27 @@ namespace Server
             this.clientIdCounter = 0;
             this.IpAddress = "127.0.0.1";
             this.Port = 5960;
-            this.Username = "Server";
+            this.SourceUsername = "Server";
+
+            this.SendMessageCMD = new RelayCommand(() => this.SendMessage(this.TargetUsername, this.MessageContent));
+            this.SwitchServerStateCMD = new RelayCommand(this.SwitchServerState);
         }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        public BindingList<String> ChatList { get; set; }
+
+        public BindingList<Client> ClientList { get; set; }
+
+        public ICommand SendMessageCMD { get; }
+
+        public ICommand SwitchServerStateCMD { get; }
 
         public int ActiveClients
         {
             get
             {
-                return this.lstClients.Count;
+                return this.ClientList.Count;
             }
         }
 
@@ -81,10 +98,6 @@ namespace Server
             }
         }
 
-        public BindingList<String> lstChat { get; set; }
-
-        public BindingList<Client> lstClients { get; set; }
-
         public ushort Port
         {
             get
@@ -102,42 +115,79 @@ namespace Server
             }
         }
 
-        public string Username
+        public Client SelectedUsername
+        {
+            set
+            {
+                this.selectedUsername = value;
+
+                if (this.selectedUsername == null)
+                {
+                    return;
+                }
+
+                if (this.selectedUsername is Client)
+                {
+                    this.TargetUsername = this.selectedUsername.Username.ToString();
+                }
+
+                this.NotifyPropertyChanged("SelectedUsername");
+            }
+        }
+
+        public string MessageContent
         {
             get
             {
-                return this.username;
+                return this.messageContent;
             }
             set
             {
-                this.username = value;
+                this.messageContent = value;
+                this.NotifyPropertyChanged("MessageContent");
+            }
+        }
+
+        public string TargetUsername
+        {
+            get
+            {
+                return this.targetUsername;
+            }
+            set
+            {
+                this.targetUsername = value;
+                this.NotifyPropertyChanged("TargetUsername");
+            }
+        }
+        public string SourceUsername
+        {
+            get
+            {
+                return this.sourceUsername;
+            }
+            set
+            {
+                this.sourceUsername = value;
                 if (this.IsServerActive)
                 {
-                    this.lstClients[0].Username = value;
+                    this.ClientList[0].Username = value;
                 }
             }
         }
 
-        private Dispatcher _dispatcher { get; set; }
+        private Dispatcher dispatcher { get; set; }
 
-        private IPEndPoint _ipEndPoint
+        private IPEndPoint ipEndPoint
         {
             get
             {
                 return new IPEndPoint(this.ipAddress, this.port);
             }
         }
-
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        private void NotifyPropertyChanged(string propName)
+        public void SendMessage(string targetUsername, string messageContent)
         {
-            this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propName));
-        }
-
-        public void SendMessage(string toUsername, string messageContent)
-        {
-            this.SendMessage(this.lstClients[0], toUsername, messageContent);
+            this.SendMessage(this.ClientList[0], targetUsername, messageContent);
         }
 
         public void StartServer()
@@ -148,13 +198,13 @@ namespace Server
             }
 
             this.socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            this.socket.Bind(this._ipEndPoint);
+            this.socket.Bind(this.ipEndPoint);
             this.socket.Listen(5);
 
             this.thread = new Thread(new ThreadStart(this.WaitForConnections));
             this.thread.Start();
 
-            this.lstClients.Add(new Client() { ID = 0, Username = this.Username });
+            this.ClientList.Add(new Client() { ID = 0, Username = this.SourceUsername });
 
             this.IsServerActive = true;
         }
@@ -169,14 +219,14 @@ namespace Server
             //MainThread.Abort(); MainThread = null;
             //MainSocket.Shutdown(SocketShutdown.Both);
 
-            this.lstChat.Clear();
+            this.ChatList.Clear();
 
             // remove all clients
-            while (this.lstClients.Count != 0)
+            while (this.ClientList.Count != 0)
             {
-                Client c = this.lstClients[0];
+                Client c = this.ClientList[0];
 
-                this.lstClients.Remove(c);
+                this.ClientList.Remove(c);
                 c.Dispose();
             }
 
@@ -197,6 +247,15 @@ namespace Server
                 this.StopServer();
             }
         }
+
+        private void NotifyPropertyChanged(string propName)
+        {
+            //this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propName));
+            if (PropertyChanged != null)
+            {
+                PropertyChanged(this, new PropertyChangedEventArgs(propName));
+            }
+        }
         private void ProcessMessages(Client c)
         {
             while (true)
@@ -205,9 +264,9 @@ namespace Server
                 {
                     if (!c.IsSocketConnected())
                     {
-                        this._dispatcher.Invoke(new Action(() =>
+                        this.dispatcher.Invoke(new Action(() =>
                         {
-                            this.lstClients.Remove(c);
+                            this.ClientList.Remove(c);
                             c.Dispose();
                         }), null);
 
@@ -232,7 +291,7 @@ namespace Server
                             string targetUsername = data.Substring(0, data.IndexOf(':'));
                             string message = data.Substring(data.IndexOf(':') + 1);
 
-                            this._dispatcher.Invoke(new Action(() =>
+                            this.dispatcher.Invoke(new Action(() =>
                             {
                                 this.SendMessage(c, targetUsername, message);
                             }), null);
@@ -241,9 +300,9 @@ namespace Server
                 }
                 catch (Exception)
                 {
-                    this._dispatcher.Invoke(new Action(() =>
+                    this.dispatcher.Invoke(new Action(() =>
                     {
-                        this.lstClients.Remove(c);
+                        this.ClientList.Remove(c);
                         c.Dispose();
                     }), null);
                     return;
@@ -251,26 +310,26 @@ namespace Server
             }
         }
 
-        private void SendMessage(Client from, string toUsername, string messageContent)
+        private void SendMessage(Client client, string targetUsername, string messageContent)
         {
-            string logMessage = string.Format("**log** From {0} | To {1} | Message {2}", from.Username, toUsername, messageContent);
-            this.lstChat.Add(logMessage);
+            string logMessage = string.Format("**log** From {0} | To {1} | Message {2}", client.Username, targetUsername, messageContent);
+            this.ChatList.Add(logMessage);
 
-            string message = from.Username + ": " + messageContent;
+            string message = client.Username + ": " + messageContent;
 
             bool isSent = false;
 
             // if target is server
-            if (toUsername == this.Username)
+            if (targetUsername == this.SourceUsername)
             {
-                this.lstChat.Add(message);
+                this.ChatList.Add(message);
                 isSent = true;
             }
 
             // if target username is registered
-            foreach (Client c in this.lstClients)
+            foreach (Client c in this.ClientList)
             {
-                if (c.Username == toUsername)
+                if (c.Username == targetUsername)
                 {
                     c.SendMessage(message);
                     isSent = true;
@@ -280,7 +339,7 @@ namespace Server
             // if target username isn't registered
             if (!isSent)
             {
-                from.SendMessage("**Server**: Error! Username not found, unable to deliver your message"); // send an error to sender
+                client.SendMessage("**Server**: Error! Username not found, unable to deliver your message"); // send an error to sender
             }
         }
 
@@ -301,9 +360,9 @@ namespace Server
                     client.Socket = this.socket.Accept();
                     client.Thread = new Thread(() => this.ProcessMessages(client));
 
-                    this._dispatcher.Invoke(new Action(() =>
+                    this.dispatcher.Invoke(new Action(() =>
                     {
-                        this.lstClients.Add(client);
+                        this.ClientList.Add(client);
                     }), null);
 
                     client.Thread.Start();

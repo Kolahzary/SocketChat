@@ -14,6 +14,10 @@ namespace Server
 
         public event PropertyChangedEventHandler PropertyChanged;
 
+        public Socket Socket { get; set; }
+
+        public Thread Thread { get; set; }
+
         public int ID
         {
             get
@@ -26,10 +30,6 @@ namespace Server
                 this.NotifyPropertyChanged("ID");
             }
         }
-
-        public Socket Socket { get; set; }
-
-        public Thread Thread { get; set; }
 
         public string Username
         {
