@@ -2,7 +2,7 @@
 using System.Windows.Data;
 using System.Windows.Media;
 
-namespace Server
+namespace Client
 {
     public class BooleanToBrushConverter : IValueConverter
     {

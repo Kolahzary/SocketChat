@@ -4,6 +4,8 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
+using System.Windows;
+using System.Windows.Input;
 using System.Windows.Threading;
 
 namespace Client
@@ -16,19 +18,57 @@ namespace Client
         private ushort port;
         private Socket socket;
         private Thread thread;
-        private string username;
+        private string sourceUsername;
+        private string targetUsername;
+        private string messageContent;
 
         public ChatClient()
         {
             this.dispatcher = Dispatcher.CurrentDispatcher;
-            this.lstChat = new BindingList<string>();
+            this.ChatList = new BindingList<string>();
 
             this.IpAddress = "127.0.0.1";
             this.Port = 5960;
-            this.Username = "Client" + new Random().Next(0, 99).ToString(); // random username
+            this.SourceUsername = "Client" + new Random().Next(0, 99).ToString(); // random username
+            this.TargetUsername = "Server";
+
+            this.SendMessageCMD = new RelayCommand(() => this.SendMessageTo(this.TargetUsername, this.MessageContent));
+            this.SwitchClientStateCMD = new RelayCommand(this.SwitchClientState);
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
+
+        public BindingList<string> ChatList { get; set; }
+
+        public ICommand SendMessageCMD { get; }
+
+        public ICommand SwitchClientStateCMD { get; }
+
+        public string TargetUsername
+        {
+            get
+            {
+                return this.targetUsername;
+            }
+            set
+            {
+                this.targetUsername = value;
+                this.NotifyPropertyChanged("TargetUsername");
+            }
+        }
+
+        public string MessageContent
+        {
+            get
+            {
+                return this.messageContent;
+            }
+            set
+            {
+                this.messageContent = value;
+                this.NotifyPropertyChanged("MessageContent");
+            }
+        }
 
         public string IpAddress
         {
@@ -69,8 +109,6 @@ namespace Client
             }
         }
 
-        public BindingList<string> lstChat { get; set; }
-
         public ushort Port
         {
             get
@@ -88,15 +126,15 @@ namespace Client
             }
         }
 
-        public string Username
+        public string SourceUsername
         {
             get
             {
-                return this.username;
+                return this.sourceUsername;
             }
             set
             {
-                this.username = value;
+                this.sourceUsername = value;
 
                 if (this.IsClientConnected)
                 {
@@ -156,7 +194,7 @@ namespace Client
 
                         this.dispatcher.Invoke(new Action(() =>
                         {
-                            this.lstChat.Add(message);
+                            this.ChatList.Add(message);
                         }));
                     }
                 }
@@ -183,7 +221,14 @@ namespace Client
         {
             if (!this.IsClientConnected)
             {
-                this.Connect();
+                try
+                {
+                    this.Connect();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
             else
             {
@@ -200,7 +245,7 @@ namespace Client
 
             this.socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             this.socket.Connect(this.ipEndPoint);
-            this.SetUsername(this.Username);
+            this.SetUsername(this.SourceUsername);
             this.thread = new Thread(() => this.ReceiveMessages());
             this.thread.Start();
             this.IsClientConnected = true;
@@ -223,7 +268,7 @@ namespace Client
                 this.thread = null;
             }
 
-            this.lstChat.Clear();
+            this.ChatList.Clear();
             this.IsClientConnected = false;
         }
 

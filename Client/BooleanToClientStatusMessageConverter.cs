@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Windows.Data;
 
-namespace Server
+namespace Client
 {
     public class BooleanToClientStatusMessageConverter : IValueConverter
     {
