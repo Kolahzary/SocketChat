@@ -77,6 +77,8 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="BooleanToBrushConverter.cs" />
+    <Compile Include="BooleanToClientStatusMessageConverter.cs" />
+    <Compile Include="BooleanToConnectDisconnectConverter.cs" />
     <Compile Include="BooleanToServerStatusMessageConverter.cs" />
     <Compile Include="BooleanToStartStopConverter.cs" />
     <Compile Include="ChatServer.cs" />
@@ -129,6 +131,9 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="LocalServer.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="User.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
