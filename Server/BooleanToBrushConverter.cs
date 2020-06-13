@@ -2,7 +2,7 @@
 using System.Windows.Data;
 using System.Windows.Media;
 
-namespace Server
+namespace SocketChat
 {
     public class BooleanToBrushConverter : IValueConverter
     {

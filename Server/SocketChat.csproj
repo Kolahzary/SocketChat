@@ -81,7 +81,11 @@
     <Compile Include="BooleanToConnectDisconnectConverter.cs" />
     <Compile Include="BooleanToServerStatusMessageConverter.cs" />
     <Compile Include="BooleanToStartStopConverter.cs" />
+    <Compile Include="ChatClient.cs" />
+    <Compile Include="IChat.cs" />
     <Compile Include="ChatServer.cs" />
+    <Compile Include="ClientSelector.cs" />
+    <Compile Include="InverseBooleanConverter.cs" />
     <Compile Include="RelayCommand.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>

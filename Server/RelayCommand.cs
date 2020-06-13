@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Windows.Input;
 
-namespace Server
+namespace SocketChat
 {
     public class RelayCommand : ICommand
     {

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Windows.Data;
 
-namespace Server
+namespace SocketChat
 {
     public class BooleanToServerStatusMessageConverter : IValueConverter
     {

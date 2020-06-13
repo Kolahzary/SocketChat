@@ -1,6 +1,6 @@
 ﻿using System.Windows;
 
-namespace Server
+namespace SocketChat
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml

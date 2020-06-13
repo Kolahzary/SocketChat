@@ -1,15 +1,15 @@
-﻿<Window x:Class="Server.MainWindow"
+﻿<Window x:Class="SocketChat.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
-        xmlns:local="clr-namespace:Server"
+        xmlns:local="clr-namespace:SocketChat"
         mc:Ignorable="d" FontSize="14" Name="wMain" Icon="LocalServer.ico"
         Title="Server" Height="385.665" Width="526.886">
 
     <Window.DataContext>
-        <local:ChatServer/>
+        <local:ClientSelector/>
     </Window.DataContext>
 
     <Window.Resources>
@@ -20,8 +20,8 @@
 
         <StatusBar Name="sbMain" DockPanel.Dock="Bottom">
             <StatusBarItem>
-                <TextBlock Text="{Binding Path=IsServerActive,Converter={StaticResource BooleanToServerStatusMessageConverter}}" 
-                           Background="{Binding Path=IsServerActive,Converter={StaticResource BooleanToBrushConverter}}" />
+                <TextBlock Text="{Binding Path=IsActive,Converter={StaticResource BooleanToServerStatusMessageConverter}}" 
+                           Background="{Binding Path=IsActive,Converter={StaticResource BooleanToBrushConverter}}" />
             </StatusBarItem>
             <Separator/>
             <StatusBarItem>
@@ -32,7 +32,7 @@
             </StatusBarItem>
         </StatusBar>
 
-        <DockPanel IsEnabled="{Binding Path=IsServerActive}" DockPanel.Dock="Right">
+        <DockPanel IsEnabled="{Binding Path=IsActive}" DockPanel.Dock="Right">
             <TextBlock DockPanel.Dock="Top" Text="Active Clients" TextAlignment="Center"/>
             <ListBox Name="lbActiveClients" ItemsSource="{Binding Path=ClientList}" DisplayMemberPath="Username" SelectedItem ="{Binding SelectedUsername}"/>
         </DockPanel>
@@ -49,21 +49,23 @@
                 <RowDefinition/>
             </Grid.RowDefinitions>
 
-            <TextBlock Grid.Column="0" Grid.Row="0" Text="Socket Address:"/>
+            <TextBlock Grid.Column="0" Grid.Row="0" Text="IP Address:"/>
             <TextBox Grid.Column="1" Grid.Row="0" Text="{Binding Path=IpAddress, UpdateSourceTrigger=PropertyChanged, ValidatesOnExceptions=True}" 
-                     IsEnabled="{Binding Path=IsServerStopped}"/>
+                     IsEnabled="{Binding Path=IsActive, Converter={StaticResource InverseBooleanConverter}}"/>
             <xctk:IntegerUpDown Grid.Column="2" Grid.Row="0" Value="{Binding Path=Port, UpdateSourceTrigger=PropertyChanged, ValidatesOnExceptions=True}" 
-                                Width="70" IsEnabled="{Binding Path=IsServerStopped}"/>
+                                Width="70" IsEnabled="{Binding Path=IsActive, Converter={StaticResource InverseBooleanConverter}}"/>
 
             <TextBlock Grid.Column="0" Grid.Row="1" Text="Username:"/>
             <TextBox Grid.Column="1" Grid.Row="1" Text="{Binding Path=SourceUsername, UpdateSourceTrigger=PropertyChanged}"/>
 
+            <ToggleButton Grid.Column="2" Grid.Row="1" Style="{StaticResource ToggleButtonStyle1}" Content="Server" IsChecked="{Binding IsServer}"/>
+
             <Button Name="bSwitchServerState" Grid.Column="3" Grid.Row="0" Grid.RowSpan="2" 
-                    Content="{Binding Path=IsServerActive,Converter={StaticResource BooleanToStartStopConverter}}" 
-                    Command="{Binding SwitchServerStateCMD}"/>
+                    Content="{Binding Path=IsActive,Converter={StaticResource BooleanToStartStopConverter}}" 
+                    Command="{Binding StartConnectionCMD}"/>
         </Grid>
 
-        <DockPanel IsEnabled="{Binding Path=IsServerActive}">
+        <DockPanel IsEnabled="{Binding Path=IsActive}">
             <Grid DockPanel.Dock="Top">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="auto"/>
