@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25123.0
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.106
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Server", "Server\Server.csproj", "{B0F9FB15-7285-4EC6-BD09-CDBAFF921E59}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketChat", "Server\SocketChat.csproj", "{B0F9FB15-7285-4EC6-BD09-CDBAFF921E59}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Client", "Client\Client.csproj", "{AB32865C-0974-4A51-A9A5-ED318393557A}"
 EndProject
@@ -24,5 +24,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C47BF69D-195E-4BE9-B9D8-C4C5790B6AB8}
 	EndGlobalSection
 EndGlobal
