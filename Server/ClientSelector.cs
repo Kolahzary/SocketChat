@@ -41,11 +41,11 @@ namespace SocketChat
         {
             get
             {
-                return chatInterface.ChatList;
+                return this.chatInterface.ChatList;
             }
             private set
             {
-                chatInterface.ChatList = value;
+                this.chatInterface.ChatList = value;
                 this.NotifyPropertyChanged("ChatList");
             }
         }
@@ -53,11 +53,11 @@ namespace SocketChat
         {
             get
             {
-                return chatInterface.ClientList;
+                return this.chatInterface.ClientList;
             }
             private set
             {
-                chatInterface.ClientList = value;
+                this.chatInterface.ClientList = value;
                 this.NotifyPropertyChanged("ClientList");
             }
         }
@@ -81,11 +81,11 @@ namespace SocketChat
         {
             get
             {
-                return chatInterface.IsActive;
+                return this.chatInterface.IsActive;
             }
             private set
             {
-                chatInterface.IsActive = value;
+                this.chatInterface.IsActive = value;
                 this.NotifyPropertyChanged("IsActive");
                 //this.NotifyPropertyChanged("IsServerActive");
                 //this.NotifyPropertyChanged("IsServerStopped");
@@ -106,16 +106,16 @@ namespace SocketChat
         {
             get
             {
-                return chatInterface.IPAddress.ToString();
+                return this.chatInterface.IPAddress.ToString();
             }
             set
             {
-                if (IsActive)
+                if (this.IsActive)
                 {
                     throw new Exception("Can't change this property when server is active");
                 }
 
-                chatInterface.IPAddress = IPAddress.Parse(value);
+                this.chatInterface.IPAddress = IPAddress.Parse(value);
             }
         }
 
@@ -123,16 +123,16 @@ namespace SocketChat
         {
             get
             {
-                return chatInterface.Port;
+                return this.chatInterface.Port;
             }
             set
             {
-                if (IsActive)
+                if (this.IsActive)
                 {
                     throw new Exception("Can't change this property when server is active");
                 }
 
-                chatInterface.Port = value;
+                this.chatInterface.Port = value;
             }
         }
 
@@ -149,7 +149,7 @@ namespace SocketChat
                 {
                     this.chatInterface.ClientList[0].Username = value;
                 }
-                NotifyPropertyChanged("SourceUsername");
+                this.NotifyPropertyChanged("SourceUsername");
             }
         }
 
@@ -210,25 +210,25 @@ namespace SocketChat
                 // Change Icon.
                 this.chatInterface = new ChatServer();
 
-                SourceUsername = chatInterface.SourceUsername;
+                this.SourceUsername = this.chatInterface.SourceUsername;
             }
             else
             {
-                chatInterface = new ChatClient();
+                this.chatInterface = new ChatClient();
 
-                SourceUsername = chatInterface.SourceUsername;
+                this.SourceUsername = this.chatInterface.SourceUsername;
             }
 
             this.IpAddress = "127.0.0.1";
-            this.Port = 5960;            
+            this.Port = 5960;
 
-            ClientList = new BindingList<Client>();
+            this.ClientList = new BindingList<Client>();
 
-            ChatList = new BindingList<string>();
+            this.ChatList = new BindingList<string>();
 
-            chatInterface.IsActiveChanged = new EventHandler(IsActiveBool);
+            this.chatInterface.IsActiveChanged = new EventHandler(this.IsActiveBool);
 
-            chatInterface.ClientList.ListChanged += (_sender, _e) =>
+            this.chatInterface.ClientList.ListChanged += (_sender, _e) =>
             {
                 this.NotifyPropertyChanged("ActiveClients");
             };
@@ -237,15 +237,15 @@ namespace SocketChat
 
         public void StartConnection()
         {
-            if (IsServer)
+            if (this.IsServer)
             {
-                if (!IsActive)
+                if (!this.IsActive)
                 {
-                    chatInterface.StartConnection();
+                    this.chatInterface.StartConnection();
                 }
                 else // server is currently active and should be stopped
                 {
-                    chatInterface.StopConnection();
+                    this.chatInterface.StopConnection();
                 }
             }
             else
@@ -270,8 +270,8 @@ namespace SocketChat
 
         public void SendMessage(string targetUsername, string messageContent)
         {
-            string sourceMessage = chatInterface.SourceUsername + ": " + messageContent;
-            chatInterface.ChatList.Add(sourceMessage);
+            string sourceMessage = this.chatInterface.SourceUsername + ": " + messageContent;
+            this.chatInterface.ChatList.Add(sourceMessage);
 
             bool isSent = false;
 
@@ -283,9 +283,9 @@ namespace SocketChat
             else
             {
                 //Server send
-                if (IsServer)
+                if (this.IsServer)
                 {
-                    var client = chatInterface.ClientList.First(i => i.Username == TargetUsername);
+                    var client = this.chatInterface.ClientList.First(i => i.Username == this.TargetUsername);
                     client.SendMessage(sourceMessage);
                     isSent = true;
                 }
@@ -305,17 +305,17 @@ namespace SocketChat
 
         public void IsActiveBool(object sender, EventArgs e)
         {
-            NotifyPropertyChanged("IsActive");
+            this.NotifyPropertyChanged("IsActive");
         }
 
         public void UpdateChat(object sender, EventArgs e)
         {
-            NotifyPropertyChanged("ChatList");
+            this.NotifyPropertyChanged("ChatList");
         }
 
         private void UpdateUsers()
         {
-            Client c = chatInterface.ClientList.First(i => i.Username == TargetUsername);
+            Client c = this.chatInterface.ClientList.First(i => i.Username == this.TargetUsername);
         }
 
         private void NotifyPropertyChanged(string propName)

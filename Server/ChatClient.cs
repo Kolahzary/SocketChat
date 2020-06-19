@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -22,12 +23,12 @@ namespace SocketChat
         {
             get
             {
-                return isActive;
+                return this.isActive;
             }
             set
             {
-                isActive = value;
-                OnIsActiveChanged(EventArgs.Empty);
+                this.isActive = value;
+                this.OnIsActiveChanged(EventArgs.Empty);
             }
         }
 
@@ -44,9 +45,9 @@ namespace SocketChat
 
         public ChatClient()
         {
-            Dispatcher = Dispatcher.CurrentDispatcher;
-            ClientList = new BindingList<Client>();
-            ChatList = new BindingList<string>();
+            this.Dispatcher = Dispatcher.CurrentDispatcher;
+            this.ClientList = new BindingList<Client>();
+            this.ChatList = new BindingList<string>();
 
             this.ClientIdCounter = 0;
             this.SourceUsername = "Client" + new Random().Next(0, 99).ToString(); // random username
@@ -54,23 +55,22 @@ namespace SocketChat
 
         public void StartConnection()
         {
-            if (IsActive)
+            if (this.IsActive)
             {
                 return;
             }
 
-            Socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            Socket.Connect(IPEndPoint);
-            SetUsername(SourceUsername);
+            this.Socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            this.Socket.Connect(this.IPEndPoint);
+            this.SetUsername(this.SourceUsername);
 
-            Thread = new Thread(() => this.ReceiveMessages());
-            Thread.Start();
+            this.Thread = new Thread(() => this.ReceiveMessages());
+            this.Thread.Start();
 
-            ClientList.Add(new Client() { ID = 0, Username = SourceUsername }); // Test Added from Server, Adds your self
+            // **Test** Adds your self to client list
+            //ClientList.Add(new Client() { ID = 0, Username = SourceUsername }); 
 
-            IsActive = true;
-
-            //this.GetClientListUpdate();
+            this.IsActive = true;
         }
 
         private void SetUsername(string newUsername)
@@ -80,7 +80,7 @@ namespace SocketChat
             this.Socket.Send(Encoding.Unicode.GetBytes(cmd));
         }
 
-        public void ReceiveMessages() // Client
+        public void ReceiveMessages()
         {
             while (true)
             {
@@ -92,7 +92,7 @@ namespace SocketChat
                     {
                         this.Dispatcher.Invoke(new Action(() =>
                         {
-                            StopConnection();
+                            this.StopConnection();
                         }));
                         return;
                     }
@@ -101,13 +101,41 @@ namespace SocketChat
 
                     if (x > 0)
                     {
-                        string message = Encoding.Unicode.GetString(inf).Trim('\0');
+                        string strMessage = Encoding.Unicode.GetString(inf);
 
-                        this.Dispatcher.Invoke(new Action(() =>
+                        // Adds new users to existing client list
+                        if (strMessage.Substring(0, 8) == "/setname")
                         {
-                            ChatList.Add(message);
-                        }));
+                            string newUsername = strMessage.Replace("/setname ", "").Trim('\0');
+
+                            this.Dispatcher.Invoke(new Action(() =>
+                            {
+                                this.ClientList.Add(new Client() { ID = ClientIdCounter, Username = newUsername });
+                            }));
+
+                        }
+                        // Removes old users from existing client list
+                        else if (strMessage.Substring(0, 8) == "/delname")
+                        {
+                            string oldUsername = strMessage.Replace("/delname ", "").Trim('\0');
+
+                            Client oldUser = this.ClientList.First(item => item.Username == oldUsername);
+
+                            this.Dispatcher.Invoke(new Action(() =>
+                            {
+                                this.ClientList.Remove(oldUser);
+                            }));
+                        }
+                        else
+                        {
+                            strMessage = Encoding.Unicode.GetString(inf).Trim('\0');
+
+                            this.Dispatcher.Invoke(new Action(() =>
+                            {
+                                this.ChatList.Add(strMessage);
+                            }));
                     }
+                }
                 }
                 catch (Exception)
                 {
@@ -139,15 +167,9 @@ namespace SocketChat
             return true;
         }
 
-        //public void SendMessage(string target, string message)
-        //{
-        //    string message1 = string.Format("/msgto {0}:{1}", target, message);
-        //    this.socket.Send(Encoding.Unicode.GetBytes(message1));
-        //}
-
         public void StopConnection()
         {
-            if (!IsActive)
+            if (!this.IsActive)
             {
                 return;
             }
@@ -162,13 +184,14 @@ namespace SocketChat
                 this.Thread = null;
             }
 
-            ChatList.Clear();
-            IsActive = false;
+            this.ChatList.Clear();
+            this.ClientList.Clear();
+            this.IsActive = false;
         }
 
         public void OnIsActiveChanged(EventArgs e)
         {
-            IsActiveChanged?.Invoke(this, e);
+            this.IsActiveChanged?.Invoke(this, e);
         }
     }
 }

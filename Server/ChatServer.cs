@@ -1,10 +1,12 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
+using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
 
@@ -17,17 +19,17 @@ namespace SocketChat
         public Socket Socket { get; set; }
         public Thread Thread { get; set; }
         public Dispatcher Dispatcher { get; set; }
-        
+
         public bool IsActive
         {
             get
             {
-                return isActive;
+                return this.isActive;
             }
             set
             {
-                isActive = value;
-                OnIsActiveChanged(EventArgs.Empty);
+                this.isActive = value;
+                this.OnIsActiveChanged(EventArgs.Empty);
             }
         }
 
@@ -44,53 +46,57 @@ namespace SocketChat
 
         public ChatServer()
         {
-            Dispatcher = Dispatcher.CurrentDispatcher;
-            ClientList = new BindingList<Client>();
-            ChatList = new BindingList<string>();
-            
+            this.Dispatcher = Dispatcher.CurrentDispatcher;
+            this.ClientList = new BindingList<Client>();
+            this.ChatList = new BindingList<string>();
+
             this.ClientIdCounter = 0;
             this.SourceUsername = "Server";
+
+
         }
 
         public void StartConnection()
         {
-            if (IsActive) // Is this nessercary?
+            if (this.IsActive) // Is this nessercary?
             {
                 return;
             }
 
-            Socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            Socket.Bind(IPEndPoint); // Put try catch here for multiple server on same endpoint
-            Socket.Listen(5);
+            this.Socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            this.Socket.Bind(this.IPEndPoint); // Put try catch here for multiple server on same endpoint
+            this.Socket.Listen(5);
 
-            Thread = new Thread(new ThreadStart(WaitForConnections));
-            Thread.Start();
+            this.Thread = new Thread(new ThreadStart(this.WaitForConnections));
+            this.Thread.Start();
 
-            ClientList.Add(new Client() { ID = 0, Username = SourceUsername });
+            this.ClientList.Add(new Client() { ID = ClientIdCounter, Username = SourceUsername });
+            //ClientIdCounter++;
 
-            IsActive = true;
+            this.IsActive = true;
         }
 
         private void WaitForConnections()
         {
             while (true)
             {
-                if (Socket == null)
+                if (this.Socket == null)
                 {
                     return;
                 }
 
                 Client client = new Client();
-                client.ID = ClientIdCounter;
+                client.ID = this.ClientIdCounter;
                 client.Username = "NewUser"; // نام کاربری موقت
                 try
                 {
-                    client.Socket = Socket.Accept();
-                    client.Thread = new Thread(() => this.ProcessMessages(client));
+                    client.Socket = this.Socket.Accept();
+                    client.Thread = new Thread(() => this.ProcessMessages(client)); // maybe add await
 
-                    Dispatcher.Invoke(new Action(() =>
+                    this.Dispatcher.Invoke(new Action(() =>
                     {
-                        ClientList.Add(client); //Share this list with Clients somehow
+                        this.ClientList.Add(client); //Share this list with Clients somehow
+
                         //this.SendClientListUpdate();
                     }), null);
 
@@ -98,7 +104,7 @@ namespace SocketChat
                 }
                 catch (Exception ex)
                 {
-                    //MessageBox.Show(ex.Message, "Server Refused Client Connection");
+                    MessageBox.Show(ex.Message, "Server Refused Client Connection");
                     //throw;
                 }
             }
@@ -112,9 +118,13 @@ namespace SocketChat
                 {
                     if (!client.IsSocketConnected())
                     {
-                        Dispatcher.Invoke(new Action(() =>
+                        this.Dispatcher.Invoke(new Action(() =>
                         {
-                            ClientList.Remove(client);
+                            this.ClientList.Remove(client);
+
+                            string oldUser = string.Format("/delname {0}", client.Username);
+                            this.RemoveActiveUser(client, oldUser);
+
                             client.Dispose();
                         }), null);
 
@@ -132,54 +142,46 @@ namespace SocketChat
                             string newUsername = strMessage.Replace("/setname ", "").Trim('\0');
 
                             client.Username = newUsername;
+
+                            // Updates Clients with new and existing user list.
+                            this.UpdateClientsActiveUsers(client, strMessage);
                         }
+                        // delete this
+                        //if (x == 0)
+                        //{
+                        //    MessageBox.Show("X == 0, new error!");
+                        //}
                         else if (strMessage.Substring(0, 6) == "/msgto")
                         {
                             string data = strMessage.Replace("/msgto ", "").Trim('\0');
                             string targetUsername = data.Substring(0, data.IndexOf(':'));
                             string message = data.Substring(data.IndexOf(':') + 1);
 
-                            Dispatcher.Invoke(new Action(() =>
+                            this.Dispatcher.Invoke(new Action(() =>
                             {
-                                //this.SendMessage(client, targetUsername, message);
-                                //this.SendMessage(targetUsername, message);
-                                string message1 = client.Username + ": " + message;
+                                string targetMessage = client.Username + ": " + message;
 
                                 // if target is server *TODO*
 
                                 // Print recieved message
-                                ChatList.Add(message1);
+                                this.ChatList.Add(targetMessage);
 
-                                // Send to others
+                                // Forwards message to clients
+                                this.ForwardClientMessage(client, targetUsername, targetMessage);
 
-                                if (targetUsername != SourceUsername) // if message isnt going to server
-                                {
-                                    var c = ClientList.FirstOrDefault(i => i.Username == targetUsername);
-
-                                    // if target username is registered
-                                    if (c != null)
-                                    {
-                                        string message4 = client.Username + ": " + message;
-                                        c.SendMessage(message4);
-                                    }
-                                    // if target username isn't registered
-                                    else
-                                    {
-                                        string mess = "Error! Username not found, unable to deliver your message";
-                                        client.SendMessage(mess);
-                                        ChatList.Add("**Server**: Error! Username not found, unable to deliver your message");
-                                    }
-                                }
 
                             }), null);
                         }
                     }
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-                    Dispatcher.Invoke(new Action(() =>
+                    MessageBox.Show(ex.ToString() + "entered Ex.1");
+                    this.Dispatcher.Invoke(new Action(() =>
                     {
-                        ClientList.Remove(client);
+                        MessageBox.Show(ex.ToString() + "entered Ex.2");
+
+                        this.ClientList.Remove(client);
                         client.Dispose();
                     }), null);
                     return;
@@ -187,9 +189,64 @@ namespace SocketChat
             }
         }
 
+        private void UpdateClientsActiveUsers(Client client, string strMessage)
+        {
+            foreach (Client user in this.ClientList)
+            {
+                // Sends all existing users to the most recent user.
+                if (client == this.ClientList.Last())
+                {
+                    string allUsers = $"/setname {user.Username}";
+                    client.SendMessage(allUsers);
+
+                    // Async may send names as one string if not set.
+                    Thread.Sleep(50);
+                }
+
+                // Sends most recent user to all existing users.
+                if (client != user)
+                {
+                    this.ForwardClientMessage(client, user.Username, strMessage);
+                }
+            }
+        }
+
+        private void RemoveActiveUser(Client client, string delMessage)
+        {
+            foreach (Client user in this.ClientList)
+            {
+                if (client != user)
+                {
+                    this.ForwardClientMessage(client, user.Username, delMessage);
+                }
+            }            
+        }
+
+        private void ForwardClientMessage(Client client, string targetUsername, string targetMessage)
+        {
+            // Stops server sending message to itself.
+            if (targetUsername != this.SourceUsername)
+            {
+                Client user = this.ClientList.FirstOrDefault(item => item.Username == targetUsername);
+
+                // if target username is registered
+                if (user != null)
+                {
+                    user.SendMessage(targetMessage);
+                }
+                // if target username isn't registered
+                else
+                {
+                    string errorMessage = "Error! Username not found, unable to deliver your message";
+                    client.SendMessage(errorMessage);
+                    this.ChatList.Add("**Server**: Error! Username not found, unable to deliver your message");
+                }
+            }
+        }
+
         public void StopConnection()
         {
-            if (!IsActive)
+            if (!this.IsActive)
             {
                 return;
             }
@@ -197,26 +254,26 @@ namespace SocketChat
             //MainThread.Abort(); MainThread = null;
             //MainSocket.Shutdown(SocketShutdown.Both);
 
-            ChatList.Clear();
+            this.ChatList.Clear();
 
             // remove all clients
-            while (ClientList.Count != 0)
+            while (this.ClientList.Count != 0)
             {
-                Client c = ClientList[0];
+                Client c = this.ClientList[0];
 
-                ClientList.Remove(c);
+                this.ClientList.Remove(c);
                 c.Dispose();
             }
 
-            Socket.Dispose();
-            Socket = null;
+            this.Socket.Dispose();
+            this.Socket = null;
 
-            IsActive = false;
+            this.IsActive = false;
         }
 
         public void OnIsActiveChanged(EventArgs e)
         {
-            IsActiveChanged?.Invoke(this, e);
+            this.IsActiveChanged?.Invoke(this, e);
         }
     }
 }
