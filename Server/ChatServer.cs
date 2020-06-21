@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
@@ -64,7 +65,8 @@ namespace SocketChat
             }
 
             this.Socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            this.Socket.Bind(this.IPEndPoint); // Put try catch here for multiple server on same endpoint
+
+            this.Socket.Bind(this.IPEndPoint);
             this.Socket.Listen(5);
 
             this.Thread = new Thread(new ThreadStart(this.WaitForConnections));
@@ -92,20 +94,17 @@ namespace SocketChat
                 {
                     client.Socket = this.Socket.Accept();
                     client.Thread = new Thread(() => this.ProcessMessages(client)); // maybe add await
-
                     this.Dispatcher.Invoke(new Action(() =>
                     {
-                        this.ClientList.Add(client); //Share this list with Clients somehow
-
-                        //this.SendClientListUpdate();
+                        this.ClientList.Add(client);
                     }), null);
 
-                    client.Thread.Start();
+                    client.Thread.Start();                    
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(ex.Message, "Server Refused Client Connection");
-                    //throw;
+                    MessageBox.Show(ex.Message, "waitForConnections Method - Server Refused Client Connection");
+                    //throw new Exception(ex.Message);
                 }
             }
         }
@@ -120,11 +119,8 @@ namespace SocketChat
                     {
                         this.Dispatcher.Invoke(new Action(() =>
                         {
+                            this.RemoveActiveUser(client);
                             this.ClientList.Remove(client);
-
-                            string oldUser = string.Format("/delname {0}", client.Username);
-                            this.RemoveActiveUser(client, oldUser);
-
                             client.Dispose();
                         }), null);
 
@@ -176,11 +172,11 @@ namespace SocketChat
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(ex.ToString() + "entered Ex.1");
                     this.Dispatcher.Invoke(new Action(() =>
                     {
-                        MessageBox.Show(ex.ToString() + "entered Ex.2");
+                        Debug.WriteLine(ex.ToString());
 
+                        this.RemoveActiveUser(client);
                         this.ClientList.Remove(client);
                         client.Dispose();
                     }), null);
@@ -211,8 +207,10 @@ namespace SocketChat
             }
         }
 
-        private void RemoveActiveUser(Client client, string delMessage)
+        private void RemoveActiveUser(Client client)
         {
+            string delMessage = string.Format("/delname {0}", client.Username);
+
             foreach (Client user in this.ClientList)
             {
                 if (client != user)
@@ -254,6 +252,8 @@ namespace SocketChat
             //MainThread.Abort(); MainThread = null;
             //MainSocket.Shutdown(SocketShutdown.Both);
 
+            
+
             this.ChatList.Clear();
 
             // remove all clients
@@ -268,6 +268,7 @@ namespace SocketChat
             this.Socket.Dispose();
             this.Socket = null;
 
+            
             this.IsActive = false;
         }
 

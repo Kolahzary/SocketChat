@@ -137,11 +137,12 @@ namespace SocketChat
                     }
                 }
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
                     this.Dispatcher.Invoke(new Action(() =>
                     {
                         this.StopConnection();
+                        MessageBox.Show(ex.Message, "Receive Messages Method Failed");
                     }));
 
                     return;

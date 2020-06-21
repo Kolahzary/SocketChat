@@ -62,6 +62,36 @@ namespace SocketChat
             }
         }
 
+        public string WindowTitle
+        {
+            get
+            {
+                if (IsServer)
+                {
+                    return "Server";
+                }
+                else
+                {
+                    return "Client";
+                }
+            }
+        }
+
+        public string WindowIcon
+        {
+            get
+            {
+                if (IsServer)
+                {
+                    return "Server.ico";
+                }
+                else
+                {
+                    return "Client.ico";
+                }
+            }
+        }
+
         public bool IsServer
         {
             get
@@ -70,9 +100,12 @@ namespace SocketChat
             }
             set
             {
-                // Add check = if there is an active connection setting can not be changed.
+                // Set to cant change if is active
+
                 this.isServer = value;
                 this.NotifyPropertyChanged("IsServer");
+                this.NotifyPropertyChanged("WindowTitle");
+                this.NotifyPropertyChanged("WindowIcon");
                 this.SelectClient();
             }
         }
@@ -116,6 +149,7 @@ namespace SocketChat
                 }
 
                 this.chatInterface.IPAddress = IPAddress.Parse(value);
+                this.NotifyPropertyChanged("IpAddress");
             }
         }
 
@@ -133,6 +167,7 @@ namespace SocketChat
                 }
 
                 this.chatInterface.Port = value;
+                this.NotifyPropertyChanged("Port");
             }
         }
 
@@ -241,7 +276,21 @@ namespace SocketChat
             {
                 if (!this.IsActive)
                 {
-                    this.chatInterface.StartConnection();
+                    try
+                    {
+                        this.chatInterface.StartConnection();
+                    }
+                    catch (SocketException ex)
+                    {
+                        if (ex.ErrorCode == 10048)
+                        {
+                            MessageBox.Show("Port " + Port + " is currently in use.");
+                        }
+                        else
+                        {
+                            MessageBox.Show(ex.Message);
+                        }
+                    }
                 }
                 else // server is currently active and should be stopped
                 {

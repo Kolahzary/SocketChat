@@ -35,7 +35,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>LocalServer.ico</ApplicationIcon>
+    <ApplicationIcon>Server.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -84,7 +84,7 @@
     <Compile Include="ChatClient.cs" />
     <Compile Include="IChat.cs" />
     <Compile Include="ChatServer.cs" />
-    <Compile Include="ClientSelector.cs" />
+    <Compile Include="SocketChat.cs" />
     <Compile Include="InverseBooleanConverter.cs" />
     <Compile Include="RelayCommand.cs" />
     <Page Include="MainWindow.xaml">
@@ -134,10 +134,10 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="LocalServer.ico" />
+    <Resource Include="Server.ico" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="User.ico" />
+    <Resource Include="Client.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
