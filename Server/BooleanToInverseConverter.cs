@@ -4,7 +4,7 @@ using System.Windows.Data;
 namespace SocketChat
 {
     [ValueConversion(typeof(bool), typeof(bool))]
-    public class InverseBooleanConverter : IValueConverter
+    public class BooleanToInverseConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
         {

@@ -67,7 +67,8 @@ namespace SocketChat
             this.Socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
             this.Socket.Bind(this.IPEndPoint);
-            this.Socket.Listen(5);
+            // Increased from 5 to
+            this.Socket.Listen(1);
 
             this.Thread = new Thread(new ThreadStart(this.WaitForConnections));
             this.Thread.Start();
@@ -82,31 +83,50 @@ namespace SocketChat
         {
             while (true)
             {
-                if (this.Socket == null)
-                {
-                    return;
-                }
-
-                Client client = new Client();
-                client.ID = this.ClientIdCounter;
-                client.Username = "NewUser"; // نام کاربری موقت
-                try
-                {
-                    client.Socket = this.Socket.Accept();
-                    client.Thread = new Thread(() => this.ProcessMessages(client)); // maybe add await
-                    this.Dispatcher.Invoke(new Action(() =>
+                    if (this.Socket == null)
                     {
-                        this.ClientList.Add(client);
-                    }), null);
+                        throw new Exception();
+                        //return;
+                    }
 
-                    client.Thread.Start();                    
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.Message, "waitForConnections Method - Server Refused Client Connection");
-                    //throw new Exception(ex.Message);
-                }
+                    Client client = new Client();
+                    client.ID = this.ClientIdCounter;
+                    client.Username = "NewUser"; // نام کاربری موقت
+                    try
+                    {
+                        client.Socket = this.Socket.Accept();
+                        client.Thread = new Thread(() => this.ProcessMessages(client));
+
+                        this.Dispatcher.Invoke(new Action(() =>
+                        {
+                            this.ClientList.Add(client);
+                        }), null);
+
+                        client.Thread.Start();
+                    }
+                    catch (SocketException ex)
+                    {
+                        // Concurrently closing a listener that is accepting at the time causes exception 10004.
+                        Debug.WriteLineIf(ex.ErrorCode != 10004, $"*EXCEPTION* {ex.ErrorCode}: {ex.Message}");
+                        if (ex.ErrorCode != 10004)
+                        {
+                            MessageBox.Show(ex.Message);
+                        }
+                    }
             }
+        }
+
+        public void PrintError(Exception ex)
+        {
+            StringBuilder sb = new StringBuilder();
+
+            sb.Append($"\nMessage ---\n{ex.Message}");
+            sb.AppendLine($"\nHelpLink ---\n{ex.HelpLink}");
+            sb.AppendLine($"\nSource ---\n{ex.Source}");
+            sb.AppendLine($"\nStackTrace ---\n{ex.StackTrace}");
+            sb.AppendLine($"\nTargetSite ---\n{ex.TargetSite}");
+
+            MessageBox.Show(sb.ToString());
         }
 
         private void ProcessMessages(Client client)
@@ -142,11 +162,6 @@ namespace SocketChat
                             // Updates Clients with new and existing user list.
                             this.UpdateClientsActiveUsers(client, strMessage);
                         }
-                        // delete this
-                        //if (x == 0)
-                        //{
-                        //    MessageBox.Show("X == 0, new error!");
-                        //}
                         else if (strMessage.Substring(0, 6) == "/msgto")
                         {
                             string data = strMessage.Replace("/msgto ", "").Trim('\0');
@@ -170,15 +185,24 @@ namespace SocketChat
                         }
                     }
                 }
-                catch (Exception ex)
+                catch (SocketException ex)
                 {
                     this.Dispatcher.Invoke(new Action(() =>
                     {
-                        Debug.WriteLine(ex.ToString());
 
                         this.RemoveActiveUser(client);
                         this.ClientList.Remove(client);
                         client.Dispose();
+
+                        Debug.WriteLine($"*EXCEPTION* {ex.ErrorCode}: {ex.Message}");
+                        if (ex.ErrorCode == 10054)
+                        {
+                            MessageBox.Show("Client has disconnected");
+                        }
+                        if (ex.ErrorCode != 10054 && ex.ErrorCode != 10004)
+                        {
+                            MessageBox.Show(ex.Message, ex.ErrorCode.ToString());
+                        }
                     }), null);
                     return;
                 }
@@ -252,8 +276,6 @@ namespace SocketChat
             //MainThread.Abort(); MainThread = null;
             //MainSocket.Shutdown(SocketShutdown.Both);
 
-            
-
             this.ChatList.Clear();
 
             // remove all clients
@@ -268,7 +290,6 @@ namespace SocketChat
             this.Socket.Dispose();
             this.Socket = null;
 
-            
             this.IsActive = false;
         }
 

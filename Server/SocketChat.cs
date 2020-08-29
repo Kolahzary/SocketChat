@@ -100,8 +100,6 @@ namespace SocketChat
             }
             set
             {
-                // Set to cant change if is active
-
                 this.isServer = value;
                 this.NotifyPropertyChanged("IsServer");
                 this.NotifyPropertyChanged("WindowTitle");
@@ -120,10 +118,6 @@ namespace SocketChat
             {
                 this.chatInterface.IsActive = value;
                 this.NotifyPropertyChanged("IsActive");
-                //this.NotifyPropertyChanged("IsServerActive");
-                //this.NotifyPropertyChanged("IsServerStopped");
-                //this.NotifyPropertyChanged("IsClientConnected");
-                //this.NotifyPropertyChanged("IsClientDisconnected");
             }
         }
 
@@ -242,15 +236,12 @@ namespace SocketChat
         {
             if (this.IsServer)
             {
-                // Change Icon.
                 this.chatInterface = new ChatServer();
-
                 this.SourceUsername = this.chatInterface.SourceUsername;
             }
             else
             {
                 this.chatInterface = new ChatClient();
-
                 this.SourceUsername = this.chatInterface.SourceUsername;
             }
 
@@ -292,7 +283,7 @@ namespace SocketChat
                         }
                     }
                 }
-                else // server is currently active and should be stopped
+                else
                 {
                     this.chatInterface.StopConnection();
                 }
@@ -320,7 +311,6 @@ namespace SocketChat
         public void SendMessage(string targetUsername, string messageContent)
         {
             string sourceMessage = this.chatInterface.SourceUsername + ": " + messageContent;
-            this.chatInterface.ChatList.Add(sourceMessage);
 
             bool isSent = false;
 
@@ -334,9 +324,17 @@ namespace SocketChat
                 //Server send
                 if (this.IsServer)
                 {
-                    var client = this.chatInterface.ClientList.First(i => i.Username == this.TargetUsername);
-                    client.SendMessage(sourceMessage);
-                    isSent = true;
+                    Client client = this.chatInterface.ClientList.FirstOrDefault(i => i.Username == this.TargetUsername);
+                    if (client != null)
+                    {
+                        client.SendMessage(sourceMessage);
+                        isSent = true;
+                    }
+                    else
+                    {
+                        sourceMessage = targetUsername + ": " + "is not an active client.";
+                        isSent = false;
+                    }
                 }
                 //Client Send
                 else
@@ -350,21 +348,12 @@ namespace SocketChat
                 }
             }
 
+            this.chatInterface.ChatList.Add(sourceMessage);
         }
 
         public void IsActiveBool(object sender, EventArgs e)
         {
             this.NotifyPropertyChanged("IsActive");
-        }
-
-        public void UpdateChat(object sender, EventArgs e)
-        {
-            this.NotifyPropertyChanged("ChatList");
-        }
-
-        private void UpdateUsers()
-        {
-            Client c = this.chatInterface.ClientList.First(i => i.Username == this.TargetUsername);
         }
 
         private void NotifyPropertyChanged(string propName)

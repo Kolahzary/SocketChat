@@ -4,10 +4,8 @@
                     xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit">
 
     <local:BooleanToStartStopConverter x:Key="BooleanToStartStopConverter" />
-    <local:BooleanToServerStatusMessageConverter x:Key="BooleanToServerStatusMessageConverter" />
-    <local:BooleanToConnectDisconnectConverter x:Key="BooleanToConnectDisconnectConverter" />
-    <local:BooleanToClientStatusMessageConverter x:Key="BooleanToClientStatusMessageConverter" />
-    <local:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
+    <local:BooleanToConnectionStatusConverter x:Key="BooleanToConnectionStatusConverter" />
+    <local:BooleanToInverseConverter x:Key="BooleanToInverseConverter"/>
     <local:BooleanToBrushConverter x:Key="BooleanToBrushConverter" />
 
     <Style TargetType="TextBox">

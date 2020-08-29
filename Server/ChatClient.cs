@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -66,9 +67,6 @@ namespace SocketChat
 
             this.Thread = new Thread(() => this.ReceiveMessages());
             this.Thread.Start();
-
-            // **Test** Adds your self to client list
-            //ClientList.Add(new Client() { ID = 0, Username = SourceUsername }); 
 
             this.IsActive = true;
         }
@@ -137,12 +135,18 @@ namespace SocketChat
                     }
                 }
                 }
-                catch (Exception ex)
+                catch (SocketException ex)
                 {
                     this.Dispatcher.Invoke(new Action(() =>
                     {
                         this.StopConnection();
-                        MessageBox.Show(ex.Message, "Receive Messages Method Failed");
+
+                        // Concurrently closing a listener that is accepting at the time causes exception 10004.
+                        Debug.WriteLineIf(ex.ErrorCode != 10004, $"*EXCEPTION* {ex.ErrorCode}: {ex.Message}");
+                        if (ex.ErrorCode != 10004)
+                        {
+                            MessageBox.Show(ex.Message);
+                        }
                     }));
 
                     return;

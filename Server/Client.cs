@@ -9,7 +9,7 @@ namespace SocketChat
     public class Client : IDisposable, INotifyPropertyChanged
     {
         private int id;
-        private bool isDisposed = false;
+        private bool isDisposed;
         private string username;
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -43,6 +43,12 @@ namespace SocketChat
                 this.NotifyPropertyChanged("Username");
             }
         }
+
+        public Client()
+        {
+            this.isDisposed = false;
+        }
+
         public static bool IsSocketConnected(Socket s)
         {
             if (!s.Connected)
