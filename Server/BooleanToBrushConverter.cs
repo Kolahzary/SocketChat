@@ -2,7 +2,7 @@
 using System.Windows.Data;
 using System.Windows.Media;
 
-namespace Server
+namespace SocketChat
 {
     public class BooleanToBrushConverter : IValueConverter
     {
@@ -12,15 +12,19 @@ namespace Server
         public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
         {
             if (value is bool)
+            {
                 if ((bool)value)
-                    return bTrue;
-            return bFalse;
+                {
+                    return this.bTrue;
+                }
+            }
+
+            return this.bFalse;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
         {
-            return (Brush)value == bTrue;
+            return (Brush)value == this.bTrue;
         }
     }
-
 }
